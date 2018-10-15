@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Monkey</title>
+		<link rel="shortcut icon" href="banana.ico">
+		<script type="text/javascript" src="javascript1.js">
+		</script>
+		<script>
+			
+			var susp = 0
+			var maxSusp = 100
+			var informees = 0
+			var gathering = false
+			var spreading = false
+			var employing = false
+			var sprCost = 5
+			var evid = 0
+			var gathCost = 10
+			var hireCostE = 15
+			var hireCostI = 2
+			var hireCostS = 500
+			var dtcv = 0
+			var gossipable = false
+			var gossiping = false
+			var gossRate = 100
+			var firstGoss = true
+			var proof = 0
+			var finding = false
+			var accusable = false
+			
+			function raise()
+			{
+				incSusp(1)
+				
+				if (susp == 100 && !gathering)
+				{
+					gathering = true
+					addButton("gather", "Gather Evidence", "evidence")
+					set("notes", "After much consideration, you begin to <br/>think you can start gathering evidence of what you suspect...")
+				}
+			}
+			
+			function gather()
+			{
+				if (susp >= gathCost)
+				{
+					evid++
+					susp -= gathCost
+					
+					set("evidence", evid + " Evidence")
+					set("suspicion", susp + "% Suspicion")
+				}
+				
+				if (evid == 15 && !spreading)
+				{
+					spreading = true
+					addButton("spread", "Spread the Word", "spread")
+					set("notes", "It seems like you have enough evidence <br/> to convince others of your findings.")
+				}
+			}
+			
+			function spread()
+			{
+				if (evid >= sprCost)
+				{
+					evid -= sprCost
+					informees++
+					maxSusp += 100
+					set("spread", informees + " Informees")
+					set("evidence", evid + " Evidence")
+				}
+				
+				if (informees == 30 && !employing)
+				{
+					employing = true
+					addButton("employ", "Employ Detectives", "detectives")
+					set("notes", "Word reaches some local detectives who would be <br/>willing to investigate. They're probably better at it than you.")
+				}
+			}
+			
+			function employ()
+			{
+				if (informees >= hireCostI && evid >= hireCostE && susp >= hireCostS)
+				{
+					evid -= hireCostE
+					informees -= hireCostI
+					maxSusp -= hireCostI * 100
+					incSusp(-hireCostS)
+					dtcv++
+					set("detectives", dtcv + " Detectives")
+					set("spread", informees + " Informees")
+					set("evidence", evid + " Evidence")
+				}
+				
+				if (evid >= 100 && !gossipable)
+				{
+					document.getElementById("right").innerHTML += "<p id='goss'>Gossip: 1000 Evidence</p> <button type='button' onclick='enableGoss()'>UNLOCK</button>"
+					gossipable = true
+				}
+			}
+			
+			function enableGoss()
+			{
+				if (evid >= 1000)
+				{
+					document.getElementById("right").innerHTML = "<p id='gossTog'>ACTIVE</p> <button type='button' onclick='gossTog()'>Gossip</button>"
+					gossiping = true
+					evid -= 1000
+					set("evidence", evid + " Evidence")
+				}
+			}
+			
+			function gossTog()
+			{
+				gossiping = !gossiping
+				
+				if(gossiping)
+				{
+					set("gossTog", "ACTIVE")
+				}
+				else
+				{
+					set("gossTog", "INACTIVE")
+				}
+			}
+			
+			function prove()
+			{
+				if (evid >= 500 && dtcv >= 10 && susp >= 1000)
+				{
+					evid -= 500
+					dtcv -= 10
+					susp -= 1000
+					proof++
+					set("proof", proof + " Proof")
+					set("evidence", evid + " Evidence")
+					set("detectives", dtcv + " Detectives")
+					set("suspicion", susp + "% Suspicion")
+				}
+				
+				if(proof = 10 && !accusable)
+				{
+					accusable = true
+					document.getElementById("right").innerHTML += "<button type='button' style='display: block;' onclick='accuse()'>ACCUSE HIM</button>"
+					set("notes", "Your hard work has paid off. The pieces are falling</br>into place. Now complete your mission and accuse this man.")
+				}
+			}
+			
+			function accuse()
+			{
+				proof -= 10
+				set("notes", "So you were right! This causes you to wonder who</br>ELSE might seem similarly suspicions...")
+			}
+			
+			function update()
+			{
+				setInterval(function()
+					{	
+						if(susp > 0)
+						{
+							susp -= 4 * dtcv
+							evid += dtcv
+						}
+						
+						if (gossiping)
+						{
+							var tmp = Math.round(informees / gossRate)
+							if (evid >= tmp * 10)
+							{
+								informees += tmp
+								evid -= tmp * 10
+								gossRate++
+							}
+							
+						}
+						
+						if (informees >= 500 && gossipable && !finding)
+						{
+							finding = true
+							addButton("prove", "Find Proof", "proof")
+							set("notes", "This mere suspicion seems to be turning</br>into some rock-solid proof.")
+						}
+						
+						maxSusp = 100 + 100 * informees
+						incSusp(informees)
+						set("spread", informees + " Informees")
+						set("evidence", evid + " Evidence")
+					}, 1000)
+			}
+			
+			function set(item, words)
+			{
+				document.getElementById(item).innerHTML = words
+			}
+			
+			function addButton(func, buttName, id)
+			{
+				document.getElementById("left").innerHTML += "<button type='button' onclick='" + func + "()'>" + buttName + "</button> <p id='"+ id + "'></p>"
+			}
+			
+			function incSusp(amount)
+			{
+				if (susp <= maxSusp - amount)
+					{
+						susp += amount
+						set("suspicion", susp + "% Suspicion")	
+					}
+					else
+					{
+						susp = maxSusp
+						set("suspicion", susp + "% Suspicion")
+					}
+			}
+		</script>
+	</head>
+	<body onLoad="update()">
+		<div id="left" style="width: 50%; display: inline; height: 100%">
+			<div id="notes" style="height: 60px;"> All is normal in the world. But one day, <br/>
+				you see your neighbor bringing in an unusual<br/>
+				amount of bananas with the groceries. You grow suspicious.</div>
+			<button type="button" onclick="raise()" style="display: block;">
+				Raise Suspicion
+			</button>
+			<p id="suspicion" style="margin-top: 10px"></p>
+		</div>
+		<div id="right" style="width: 50%; display: inline; height: 100%">
+			
+		</div>
+		<button>
+			<a href="#" onclick="save()">
+				Save
+			</a>
+		</button>
+		
+		<button>
+			<a href="#" onclick="load()">
+				Load
+			</a>
+		</button>
+	</body>
+</html>
